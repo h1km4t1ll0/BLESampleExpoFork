@@ -46,7 +46,7 @@ const DeviceModal: FC<DeviceModalProps> = (props) => {
 
   const renderDeviceModalListItem = useCallback(
     (item: ListRenderItemInfo<Device>) => {
-      return (
+      return item.item.name?.includes('WeCardio') && (
         <DeviceModalListItem
           item={item}
           connectToPeripheral={connectToPeripheral}

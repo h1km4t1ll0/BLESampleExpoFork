@@ -11,9 +11,10 @@ import {
 import * as ExpoDevice from "expo-device";
 
 import base64 from "react-native-base64";
+import { Buffer } from "buffer";
 
-const HEART_RATE_UUID = "0000180d-0000-1000-8000-00805f9b34fb";
-const HEART_RATE_CHARACTERISTIC = "00002a37-0000-1000-8000-00805f9b34fb";
+const HEART_RATE_UUID = "0000ffb1-0000-1000-8000-00805f9b34fb";
+const HEART_RATE_CHARACTERISTIC = "0000ffb2-0000-1000-8000-00805f9b34fb";
 
 interface BluetoothLowEnergyApi {
   requestPermissions(): Promise<boolean>;
@@ -95,7 +96,7 @@ function useBLE(): BluetoothLowEnergyApi {
       if (error) {
         console.log(error);
       }
-      if (device && device.name?.includes("CorSense")) {
+      if (device) {
         setAllDevices((prevState: Device[]) => {
           if (!isDuplicteDevice(prevState, device)) {
             return [...prevState, device];
@@ -138,23 +139,25 @@ function useBLE(): BluetoothLowEnergyApi {
     }
 
     const rawData = base64.decode(characteristic.value);
-    let innerHeartRate: number = -1;
-
-    const firstBitValue: number = Number(rawData) & 0x01;
-
-    if (firstBitValue === 0) {
-      innerHeartRate = rawData[1].charCodeAt(0);
-    } else {
-      innerHeartRate =
-        Number(rawData[1].charCodeAt(0) << 8) +
-        Number(rawData[2].charCodeAt(2));
+    function bytesToInt(bytePair: string): number {
+      // Convert bytes to integer using little-endian format
+      // console.log(bytePair)
+      return parseInt(bytePair, 16) //<< 8 >> 8;
     }
 
-    setHeartRate(innerHeartRate);
+// Convert string to array of signed integers
+    const arrayOfIntegers: number[] = [];
+    for (let i = 0; i < rawData.length; i += 2) {
+      const bytePair = rawData.substring(i, i+2);
+      arrayOfIntegers.push(bytesToInt(bytePair));
+    }
+    console.log(arrayOfIntegers, 'rawDataLength');
+    setHeartRate(Number(rawData));
   };
 
   const startStreamingData = async (device: Device) => {
     if (device) {
+      console.log(device)
       device.monitorCharacteristicForService(
         HEART_RATE_UUID,
         HEART_RATE_CHARACTERISTIC,

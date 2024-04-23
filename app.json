@@ -39,7 +39,8 @@
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT"
-      ]
+      ],
+      "package": "com.hikmatillo.expoblesampleg"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -48,6 +49,9 @@
       "eas": {
         "projectId": "8f60b030-8bba-4970-955a-5b8d99531bb5"
       }
+    },
+    "ios": {
+      "bundleIdentifier": "com.hikmatillo.expoblesampleg"
     }
   }
 }

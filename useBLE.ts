@@ -23,14 +23,14 @@ interface BluetoothLowEnergyApi {
   disconnectFromDevice: () => void;
   connectedDevice: Device | null;
   allDevices: Device[];
-  heartRate: number;
+  heartRate: number[];
 }
 
 function useBLE(): BluetoothLowEnergyApi {
   const bleManager = useMemo(() => new BleManager(), []);
   const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [heartRate, setHeartRate] = useState<number>(0);
+  const [heartRate, setHeartRate] = useState<number[]>([]);
 
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
@@ -122,7 +122,7 @@ function useBLE(): BluetoothLowEnergyApi {
     if (connectedDevice) {
       bleManager.cancelDeviceConnection(connectedDevice.id);
       setConnectedDevice(null);
-      setHeartRate(0);
+      setHeartRate([]);
     }
   };
 
@@ -147,38 +147,8 @@ function useBLE(): BluetoothLowEnergyApi {
         integerArray.push(value / 840);
       }
     }
-    /*
-    byteArray.readInt16BE(0),
-        byteArray.readInt16BE(2),
-        byteArray.readInt16BE(4),
-        byteArray.readInt16BE(6),
-        byteArray.readInt16BE(8),
-        byteArray.readInt16BE(10),
-        byteArray.readInt16BE(12),
-        byteArray.readInt16BE(14),
-        byteArray.readInt16BE(16),
-        byteArray.readInt16BE(18),
-    if value is not None:
-            if -3600 <= value <= 3600:
-                samples.append(value / 840)
-     */
-    // console.log(byteArray.at(0));
-//     function bytesToInt(bytePair: string): number {
-//       // Convert bytes to integer using little-endian format
-//       // console.log(bytePair)
-//       return parseInt(bytePair, 16) //<< 8 >> 8;
-//     }
-//
-// // Convert string to array of signed integers
-//     const arrayOfIntegers: number[] = [];
-//     for (let i = 0; i < rawData.length; i += 2) {
-//       const bytePair = rawData.substring(i, i+2);
-//       console.log(bytesToInt(bytePair));
-//       arrayOfIntegers.push(bytesToInt(bytePair));
-//     }
-    // console.log(arrayOfIntegers, 'rawDataLength');
     console.log(integerArray);
-    setHeartRate(Number(rawData));
+    setHeartRate(integerArray);
   };
 
   const startStreamingData = async (device: Device) => {

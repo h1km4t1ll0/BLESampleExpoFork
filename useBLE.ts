@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import { useMemo, useState } from "react";
+import {MutableRefObject, useCallback, useMemo, useRef, useState} from "react";
 import { PermissionsAndroid, Platform } from "react-native";
 import {
   BleError,
@@ -23,14 +23,20 @@ interface BluetoothLowEnergyApi {
   disconnectFromDevice: () => void;
   connectedDevice: Device | null;
   allDevices: Device[];
-  heartRate: number[];
+  heartRate: MutableRefObject<number[]>;
+  setHeartRate: (val: number[]) => void;
+  // heartRate: {value: number, date: number}[];
+  startTime: number
 }
 
 function useBLE(): BluetoothLowEnergyApi {
   const bleManager = useMemo(() => new BleManager(), []);
   const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [heartRate, setHeartRate] = useState<number[]>([]);
+  // const [heartRate, setHeartRate] = useState<{value: number, date: number}[]>([]);
+  const [heartRatef, setHeartRate] = useState<number[]>([1.5]);
+  const heartRate = useRef<number[]>([1.3])
+  const [startTime, setStartTime] = useState<number>(0)
 
   const requestAndroid31Permissions = async () => {
     const bluetoothScanPermission = await PermissionsAndroid.request(
@@ -122,14 +128,15 @@ function useBLE(): BluetoothLowEnergyApi {
     if (connectedDevice) {
       bleManager.cancelDeviceConnection(connectedDevice.id);
       setConnectedDevice(null);
-      setHeartRate([]);
+      setHeartRate([0]);
     }
   };
-
-  const onHeartRateUpdate = (
+  let time = 0;
+  const onHeartRateUpdate = useCallback((
     error: BleError | null,
     characteristic: Characteristic | null
   ) => {
+    console.log(heartRate, 'heartRate2')
     if (error) {
       console.log(error);
       return -1;
@@ -141,19 +148,32 @@ function useBLE(): BluetoothLowEnergyApi {
     const rawData = base64.decode(characteristic.value);
     const byteArray = Buffer.alloc(20, characteristic.value ,'base64');
     const integerArray: number[] = [];
+    // const integerArray: {value: number, date: number}[] = [];
     for (let i = 0; i < 20; i+=2) {
-      const value = byteArray.readInt16BE(i);
+      const value = byteArray.readUInt16BE(i);
       if (value >= -3600 && value <= 3600) {
         integerArray.push(value / 840);
+        // integerArray.push({value: value / 840, date: time + (i * 5)});
       }
     }
-    console.log(integerArray);
-    setHeartRate(integerArray);
-  };
+    // console.log(heartRate);
+    // time += 100;
+    if (integerArray.length > 0) {
+
+      // setHeartRate((state) => {
+      //   state.concat(integerArray);
+      //   return state;
+      // });
+      // setHeartRate(integerArray);
+      heartRate.current = [...heartRate.current, ...integerArray]
+      // setHeartRate(heartRate.concat(integerArray));
+    }
+    }, [startTime]);
 
   const startStreamingData = async (device: Device) => {
     if (device) {
       console.log(device)
+      setStartTime(0);
       device.monitorCharacteristicForService(
         HEART_RATE_UUID,
         HEART_RATE_CHARACTERISTIC,
@@ -172,6 +192,8 @@ function useBLE(): BluetoothLowEnergyApi {
     connectedDevice,
     disconnectFromDevice,
     heartRate,
+    setHeartRate,
+    startTime
   };
 }
 

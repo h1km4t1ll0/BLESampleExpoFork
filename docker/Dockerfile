@@ -1,4 +1,4 @@
-FROM node:16-buster-slim
+FROM node:18
 
 # Setup for unattended install
 ARG DEBIAN_FRONTEND=noninteractive
@@ -8,7 +8,7 @@ RUN { echo 'tzdata tzdata/Areas select Etc'; echo 'tzdata tzdata/Zones/Etc selec
 RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt-get install -y apt-utils
-RUN apt-get install -y git bash rsync openjdk-11-jre openjdk-11-jdk unzip
+RUN apt-get install -y git bash openjdk-17-jre openjdk-17-jdk rsync unzip
 
 # Set default node ennvironment variables
 ENV NODE_ENV development
